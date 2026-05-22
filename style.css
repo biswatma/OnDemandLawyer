@@ -336,6 +336,9 @@ a { text-decoration: none; color: inherit; }
     overflow-y: auto;
     padding-bottom: 72px; /* nav height */
 }
+.screen-container.fullscreen-active {
+    padding-bottom: 0 !important;
+}
 
 .screen {
     display: none;
@@ -930,7 +933,7 @@ a { text-decoration: none; color: inherit; }
 /* ===== MATCHING SCREEN ===== */
 #screen-matching {
     position: relative;
-    min-height: calc(100dvh - 64px);
+    min-height: 100dvh;
     overflow: hidden;
     background: #ffffff;
 }
@@ -1144,7 +1147,7 @@ a { text-decoration: none; color: inherit; }
 /* ===== CALL SCREEN ===== */
 #screen-call {
     position: relative;
-    min-height: calc(100dvh - 64px);
+    min-height: 100dvh;
     overflow: hidden;
     background: #000;
 }

@@ -462,6 +462,10 @@ function navigateTo(screen) {
     appHeader.style.background = '';
     appHeader.style.color = '';
 
+    // Toggle fullscreen active on container
+    const isFullscreen = (screen === 'call' || screen === 'matching');
+    $('#screen-container').classList.toggle('fullscreen-active', isFullscreen);
+
     if (screen === 'market') {
         if (state.map) setTimeout(() => state.map.invalidateSize(), 100);
     } else if (screen === 'request') {
