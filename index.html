@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LawyerBuddy — On-Demand Legal Consultation</title>
+    <meta name="description" content="LawyerBuddy connects you instantly with verified lawyers near you. Get on-demand legal consultation via video or voice call.">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Location Permission Modal -->
+    <div id="location-modal" class="modal-overlay active">
+        <div class="modal-card">
+            <div class="modal-icon-wrap">
+                <span class="material-symbols-outlined modal-icon">location_on</span>
+                <div class="modal-pulse-ring"></div>
+                <div class="modal-pulse-ring delay"></div>
+            </div>
+            <h2 class="modal-title">Enable Location</h2>
+            <p class="modal-desc">LawyerBuddy needs your location to find verified lawyers nearby and show accurate distances.</p>
+            <button id="btn-allow-location" class="btn-primary btn-full">
+                <span class="material-symbols-outlined">my_location</span>
+                Allow Location Access
+            </button>
+            <button id="btn-skip-location" class="btn-ghost btn-full">Use Default Location</button>
+        </div>
+    </div>
+
+    <!-- App Shell -->
+    <div id="app" class="app-shell hidden">
+        <!-- Header -->
+        <header id="app-header" class="app-header">
+            <div class="header-left">
+                <button id="header-back-btn" class="icon-btn header-icon hidden" aria-label="Go back">
+                    <span class="material-symbols-outlined">arrow_back</span>
+                </button>
+                <div id="header-location" class="header-location">
+                    <span class="material-symbols-outlined header-loc-icon">location_on</span>
+                    <div class="header-loc-text">
+                        <span class="header-loc-label">LOCATION</span>
+                        <span id="header-loc-value" class="header-loc-value">Detecting...</span>
+                    </div>
+                </div>
+                <h1 id="header-title" class="header-title hidden">LawyerBuddy</h1>
+            </div>
+            <div class="header-right">
+                <button class="icon-btn header-icon" aria-label="Search" id="btn-search">
+                    <span class="material-symbols-outlined">search</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Screen Container -->
+        <main id="screen-container" class="screen-container">
+            
+            <!-- SCREEN: Marketplace -->
+            <section id="screen-market" class="screen active">
+                <div class="market-layout">
+                    <!-- Map -->
+                    <div class="market-map-wrap">
+                        <div id="map" class="market-map"></div>
+                        <button id="btn-recenter" class="map-recenter-btn" aria-label="Re-center map">
+                            <span class="material-symbols-outlined">my_location</span>
+                        </button>
+                    </div>
+                    <!-- Lawyer List -->
+                    <div class="market-list">
+                        <h2 class="section-title">Available Lawyers Nearby</h2>
+                        <div id="lawyer-list" class="lawyer-cards"></div>
+                    </div>
+                </div>
+                <!-- FAB -->
+                <div class="fab-wrap">
+                    <button id="btn-find-lawyer" class="btn-primary btn-fab">
+                        <span class="material-symbols-outlined">search</span>
+                        Find a Lawyer
+                    </button>
+                </div>
+            </section>
+
+            <!-- SCREEN: Request -->
+            <section id="screen-request" class="screen">
+                <div class="request-content">
+                    <div class="request-header">
+                        <h2 class="page-title">Submit a Request</h2>
+                        <p class="page-subtitle">Provide details about your legal issue. We'll instantly match you with available legal professionals.</p>
+                    </div>
+                    <div class="request-form-card">
+                        <div class="form-accent-bar"></div>
+                        <!-- Practice Area -->
+                        <div class="form-section">
+                            <label class="form-label">
+                                <span class="material-symbols-outlined label-icon">gavel</span>
+                                Practice Area
+                            </label>
+                            <div class="practice-grid" id="practice-grid">
+                                <label class="practice-option">
+                                    <input type="radio" name="practice_area" value="criminal" checked>
+                                    <div class="practice-card">
+                                        <span class="material-symbols-outlined">local_police</span>
+                                        <span>Criminal</span>
+                                    </div>
+                                </label>
+                                <label class="practice-option">
+                                    <input type="radio" name="practice_area" value="civil">
+                                    <div class="practice-card">
+                                        <span class="material-symbols-outlined">balance</span>
+                                        <span>Civil</span>
+                                    </div>
+                                </label>
+                                <label class="practice-option">
+                                    <input type="radio" name="practice_area" value="family">
+                                    <div class="practice-card">
+                                        <span class="material-symbols-outlined">family_restroom</span>
+                                        <span>Family</span>
+                                    </div>
+                                </label>
+                                <label class="practice-option">
+                                    <input type="radio" name="practice_area" value="property">
+                                    <div class="practice-card">
+                                        <span class="material-symbols-outlined">real_estate_agent</span>
+                                        <span>Property</span>
+                                    </div>
+                                </label>
+                                <label class="practice-option">
+                                    <input type="radio" name="practice_area" value="corporate">
+                                    <div class="practice-card">
+                                        <span class="material-symbols-outlined">apartment</span>
+                                        <span>Corporate</span>
+                                    </div>
+                                </label>
+                                <label class="practice-option">
+                                    <input type="radio" name="practice_area" value="tax">
+                                    <div class="practice-card">
+                                        <span class="material-symbols-outlined">receipt_long</span>
+                                        <span>Tax</span>
+                                    </div>
+                                </label>
+                                <label class="practice-option">
+                                    <input type="radio" name="practice_area" value="labour">
+                                    <div class="practice-card">
+                                        <span class="material-symbols-outlined">engineering</span>
+                                        <span>Labour</span>
+                                    </div>
+                                </label>
+                                <label class="practice-option">
+                                    <input type="radio" name="practice_area" value="cyber">
+                                    <div class="practice-card">
+                                        <span class="material-symbols-outlined">security</span>
+                                        <span>Cyber</span>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                        <hr class="form-divider">
+                        <!-- Description -->
+                        <div class="form-section">
+                            <label class="form-label" for="case_description">
+                                <div class="label-left">
+                                    <span class="material-symbols-outlined label-icon">description</span>
+                                    Case Description
+                                </div>
+                                <span class="label-badge">Confidential</span>
+                            </label>
+                            <textarea id="case_description" class="form-textarea" rows="6" placeholder="Describe your legal issue... Include relevant dates, key parties involved, and your desired outcome."></textarea>
+                            <div class="textarea-footer">
+                                <span>Min. 50 characters for accurate matching</span>
+                                <span id="char-count">0 / 2000</span>
+                            </div>
+                        </div>
+                        <hr class="form-divider">
+                        <!-- Urgency & Jurisdiction -->
+                        <div class="form-row">
+                            <div class="toggle-card">
+                                <div class="toggle-info">
+                                    <span class="material-symbols-outlined toggle-icon urgent">emergency</span>
+                                    <div>
+                                        <p class="toggle-title">Urgent Review</p>
+                                        <p class="toggle-subtitle">Requires immediate attention</p>
+                                    </div>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="urgent-toggle">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                            <div class="jurisdiction-card">
+                                <span class="jurisdiction-label">JURISDICTION</span>
+                                <div class="jurisdiction-value">
+                                    <span id="jurisdiction-text">New Delhi, India</span>
+                                    <span class="material-symbols-outlined">edit</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Submit -->
+                    <div class="request-actions">
+                        <button id="btn-submit-request" class="btn-primary btn-full btn-large">
+                            <span class="material-symbols-outlined">send</span>
+                            Send Request to Available Lawyers
+                        </button>
+                        <p class="secure-note">
+                            <span class="material-symbols-outlined">lock</span>
+                            Your request is secure and privileged.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SCREEN: Matching -->
+            <section id="screen-matching" class="screen">
+                <div class="matching-bg"></div>
+                <!-- Top -->
+                <div class="matching-header">
+                    <div>
+                        <h2 class="matching-title">Finding your lawyer...</h2>
+                        <span class="matching-brand">LawyerBuddy</span>
+                    </div>
+                    <button id="btn-cancel-match" class="icon-btn-white" aria-label="Cancel">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+                <!-- Radar -->
+                <div class="matching-canvas">
+                    <div class="radar-container">
+                        <div class="radar-sweep"></div>
+                        <div class="pulse-ring layer-1"></div>
+                        <div class="pulse-ring layer-2"></div>
+                        <div class="radar-center">
+                            <span class="material-symbols-outlined radar-icon">person_search</span>
+                        </div>
+                        <!-- Simulated nearby dots -->
+                        <div class="nearby-dot dot-1"></div>
+                        <div class="nearby-dot dot-2"></div>
+                        <div class="nearby-dot dot-3"></div>
+                    </div>
+                </div>
+                <!-- Bottom Sheet -->
+                <div class="matching-sheet">
+                    <div class="sheet-handle"></div>
+                    <div class="sheet-content">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="match-progress"></div>
+                        </div>
+                        <div class="sheet-row">
+                            <div class="sheet-icon-wrap">
+                                <span class="material-symbols-outlined">verified</span>
+                            </div>
+                            <div>
+                                <h3 class="sheet-row-title">Match in progress</h3>
+                                <p class="sheet-row-desc">Scanning highest rated professionals near you</p>
+                            </div>
+                        </div>
+                        <div class="sheet-row">
+                            <div class="sheet-icon-wrap">
+                                <span class="material-symbols-outlined">schedule</span>
+                            </div>
+                            <div>
+                                <h3 class="sheet-row-title">Average response time</h3>
+                                <p class="sheet-row-desc">&lt; 1 min</p>
+                            </div>
+                        </div>
+                        <button id="btn-cancel-request" class="btn-secondary btn-full">Cancel Request</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SCREEN: Active Call -->
+            <section id="screen-call" class="screen">
+                <div class="call-bg">
+                    <img id="call-bg-img" src="" alt="Lawyer video feed" class="call-bg-img">
+                    <div class="call-gradient-overlay"></div>
+                </div>
+                <!-- Call Header -->
+                <div class="call-header">
+                    <button id="btn-back-call" class="icon-btn-glass" aria-label="Back">
+                        <span class="material-symbols-outlined">arrow_back</span>
+                    </button>
+                    <div class="encrypted-badge">
+                        <span class="material-symbols-outlined encrypted-icon">lock</span>
+                        <span>End-to-end encrypted</span>
+                    </div>
+                </div>
+                <!-- Lawyer Info -->
+                <div class="call-lawyer-info">
+                    <h2 id="call-lawyer-name" class="call-lawyer-name">Adv. Rajesh Khanna</h2>
+                    <span id="call-lawyer-spec" class="call-lawyer-spec">Criminal Law Consultation</span>
+                </div>
+                <!-- Timer & Cost -->
+                <div class="call-timer-wrap">
+                    <div class="call-timer-inner">
+                        <div class="call-live-dot"></div>
+                        <span id="call-timer" class="call-timer-text">00:00</span>
+                    </div>
+                    <div class="call-divider-v"></div>
+                    <div class="call-cost-wrap">
+                        <span class="call-currency">₹</span>
+                        <span id="call-cost" class="call-cost-text">0.00</span>
+                    </div>
+                </div>
+                <!-- Self View -->
+                <div class="self-view">
+                    <div class="self-view-placeholder">
+                        <span class="material-symbols-outlined">person</span>
+                        <span>You</span>
+                    </div>
+                </div>
+                <!-- Call Controls -->
+                <div class="call-controls">
+                    <button class="call-ctrl-btn" id="btn-toggle-video">
+                        <div class="call-ctrl-circle">
+                            <span class="material-symbols-outlined">videocam</span>
+                        </div>
+                    </button>
+                    <button class="call-ctrl-btn" id="btn-toggle-mic">
+                        <div class="call-ctrl-circle">
+                            <span class="material-symbols-outlined">mic</span>
+                        </div>
+                    </button>
+                    <button class="call-ctrl-btn" id="btn-end-call">
+                        <div class="call-ctrl-circle end-call">
+                            <span class="material-symbols-outlined fill">call_end</span>
+                        </div>
+                    </button>
+                    <button class="call-ctrl-btn" id="btn-toggle-speaker">
+                        <div class="call-ctrl-circle">
+                            <span class="material-symbols-outlined">volume_up</span>
+                        </div>
+                    </button>
+                </div>
+            </section>
+
+            <!-- SCREEN: History -->
+            <section id="screen-history" class="screen">
+                <div class="history-content">
+                    <h2 class="page-title">Consultation History</h2>
+                    <p class="page-subtitle">Your past legal consultations</p>
+                    <div id="history-list" class="history-list"></div>
+                </div>
+            </section>
+
+            <!-- SCREEN: Profile -->
+            <section id="screen-profile" class="screen">
+                <div class="profile-content">
+                    <div class="profile-header-card">
+                        <div class="profile-avatar">
+                            <span class="material-symbols-outlined">person</span>
+                        </div>
+                        <h2 class="profile-name">Biswa Ranjan</h2>
+                        <p class="profile-email">biswa@example.com</p>
+                        <div class="profile-stats">
+                            <div class="stat-item">
+                                <span class="stat-value">12</span>
+                                <span class="stat-label">Consultations</span>
+                            </div>
+                            <div class="stat-divider"></div>
+                            <div class="stat-item">
+                                <span class="stat-value">₹4,250</span>
+                                <span class="stat-label">Total Spent</span>
+                            </div>
+                            <div class="stat-divider"></div>
+                            <div class="stat-item">
+                                <span class="stat-value">4.8</span>
+                                <span class="stat-label">Avg Rating</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="profile-menu">
+                        <div class="menu-item">
+                            <span class="material-symbols-outlined">account_circle</span>
+                            <span>Edit Profile</span>
+                            <span class="material-symbols-outlined menu-arrow">chevron_right</span>
+                        </div>
+                        <div class="menu-item">
+                            <span class="material-symbols-outlined">payment</span>
+                            <span>Payment Methods</span>
+                            <span class="material-symbols-outlined menu-arrow">chevron_right</span>
+                        </div>
+                        <div class="menu-item">
+                            <span class="material-symbols-outlined">notifications</span>
+                            <span>Notifications</span>
+                            <span class="material-symbols-outlined menu-arrow">chevron_right</span>
+                        </div>
+                        <div class="menu-item">
+                            <span class="material-symbols-outlined">help</span>
+                            <span>Help & Support</span>
+                            <span class="material-symbols-outlined menu-arrow">chevron_right</span>
+                        </div>
+                        <div class="menu-item">
+                            <span class="material-symbols-outlined">gavel</span>
+                            <span>Terms of Service</span>
+                            <span class="material-symbols-outlined menu-arrow">chevron_right</span>
+                        </div>
+                        <div class="menu-item">
+                            <span class="material-symbols-outlined">privacy_tip</span>
+                            <span>Privacy Policy</span>
+                            <span class="material-symbols-outlined menu-arrow">chevron_right</span>
+                        </div>
+                        <div class="menu-item logout">
+                            <span class="material-symbols-outlined">logout</span>
+                            <span>Log Out</span>
+                            <span class="material-symbols-outlined menu-arrow">chevron_right</span>
+                        </div>
+                    </div>
+                    <p class="app-version">LawyerBuddy v2.1.0</p>
+                </div>
+            </section>
+
+        </main>
+
+        <!-- Bottom Navigation -->
+        <nav id="bottom-nav" class="bottom-nav">
+            <button class="nav-item active" data-screen="market">
+                <span class="material-symbols-outlined fill">home</span>
+                <span>Home</span>
+            </button>
+            <button class="nav-item" data-screen="request">
+                <span class="material-symbols-outlined">description</span>
+                <span>Requests</span>
+            </button>
+            <button class="nav-item" data-screen="history">
+                <span class="material-symbols-outlined">history</span>
+                <span>History</span>
+            </button>
+            <button class="nav-item" data-screen="profile">
+                <span class="material-symbols-outlined">person</span>
+                <span>Profile</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- Lawyer Detail Modal -->
+    <div id="lawyer-detail-modal" class="detail-modal-overlay hidden">
+        <div class="detail-modal">
+            <div class="detail-modal-header">
+                <button id="btn-close-detail" class="icon-btn" aria-label="Close">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div id="detail-modal-content" class="detail-modal-body"></div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="toast hidden"></div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
